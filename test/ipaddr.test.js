@@ -106,6 +106,19 @@ describe('ipaddr', () => {
         equal(addr.match(addr, 32), true);
     })
 
+    it('rejects invalid IPv4 CIDR prefix lengths in match', () => {
+        const address = IPv4.parse('8.8.8.8');
+        const network = IPv4.parse('192.168.1.0');
+
+        throws(() => address.match(network, -1));
+        throws(() => address.match(network, -0.5));
+        throws(() => address.match(network, NaN));
+        throws(() => address.match(network, Infinity));
+        throws(() => address.match(network, -Infinity));
+        throws(() => address.match(network, 24.9));
+        throws(() => address.match(network, 33));
+    })
+
     it('parses CIDR reversible', () => {
         equal(parseCIDR('1.2.3.4/24').toString(), '1.2.3.4/24');
         equal(parseCIDR('::1%zone/24').toString(), '::1%zone/24');
@@ -177,6 +190,19 @@ describe('ipaddr', () => {
         doesNotThrow(() => {
             new IPv6([0x2001, 0xdb8, 0xf53a, 0, 0, 0, 0, 1]);
         });
+    })
+
+    it('rejects invalid IPv6 CIDR prefix lengths in match', () => {
+        const address = IPv6.parse('2001:db8::1');
+        const network = IPv6.parse('2001:db8::');
+
+        throws(() => address.match(network, -1));
+        throws(() => address.match(network, -0.5));
+        throws(() => address.match(network, NaN));
+        throws(() => address.match(network, Infinity));
+        throws(() => address.match(network, -Infinity));
+        throws(() => address.match(network, 64.9));
+        throws(() => address.match(network, 129));
     })
 
     it('can construct IPv6 from 8bit parts', () => {
@@ -564,6 +590,15 @@ describe('ipaddr', () => {
         let rangelist = { dual64: [parseCIDR('1.2.4.0/24'), parseCIDR('2001:1:2:3::/64')] };
         equal(subnetMatch(new IPv4([1, 2, 4, 1]), rangelist, false), 'dual64');
         equal(subnetMatch(new IPv6([0x2001, 1, 2, 3, 0, 0, 0, 1]), rangelist, false), 'dual64');
+    })
+
+    it('subnetMatch rejects invalid CIDR prefix lengths', () => {
+        const address = IPv4.parse('8.8.8.8');
+        const network = IPv4.parse('192.168.1.0');
+
+        throws(() => subnetMatch(address, { internal: [network, -1] }, 'external'));
+        throws(() => subnetMatch(address, { internal: [network, NaN] }, 'external'));
+        throws(() => subnetMatch(address, { internal: [network, Infinity] }, 'external'));
     })
 
     it('is able to determine IP address type from byte array input', () => {
